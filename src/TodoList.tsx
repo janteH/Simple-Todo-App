@@ -1,18 +1,23 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { AgGridReact } from "ag-grid-react"
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
+import { ColDef } from "ag-grid-community"
 import TodoTable from "./TodoTable";
 import { Todo } from "./types";
 import './App.css'
 
+ModuleRegistry.registerModules([AllCommunityModule]);
+
 
 function TodoList() {
     // Declare states
-    const [todo, setTodo] = useState<Todo>({ description: '', date: '' });
+    const [todo, setTodo] = useState<Todo>({ description: '', priority: '', date: '' });
     const [todos, setTodos] = useState<Todo[]>([]);
 
     const addTodo = () => {
         if (todo.description && todo.date) {
             setTodos([...todos, todo]);
-            setTodo({ description: '', date: '' });
+            setTodo({ description: '', priority: '', date: '' });
         }
     };
 
@@ -21,9 +26,38 @@ function TodoList() {
         setTodo(prevTodo => ({ ...prevTodo, [name]: value }));
     };
 
-    const handleDelete = (index: number) => {
-        setTodos(todos.filter((_, i) => i !== index));
-    };
+    const handleDelete = () => {
+        if (gridRef.current?.api.getSelectedNodes().length) {
+            setTodos(
+                todos.filter(
+                    (_, index) => index !== Number(gridRef.current?.api.getSelectedNodes()[0].id)
+                )
+            )
+        } else {
+            alert("Select a row first!")
+        }
+    }
+
+    const [columnDefs] = useState<ColDef<Todo>[]>([
+        {
+            field: "description",
+            sortable: false,
+            filter: true
+        },
+        {
+            field: "priority",
+            filter: true,
+            cellStyle: (params) =>
+                params.value === "High" ? { color: "red" } : { color: "black" },
+        },
+        {
+            field: "date",
+            sortable: true,
+            filter: true
+        },
+    ]);
+
+    const gridRef = useRef<AgGridReact<Todo>>(null);
 
     return (
         <>
@@ -33,12 +67,22 @@ function TodoList() {
                 <main>
                     <fieldset>
                         <legend>Add todo:</legend>
+                        <label htmlFor="description">Description</label>
                         <input
                             name="description"
                             placeholder="Description"
                             onChange={handleChange}
                             value={todo.description}
                         />
+                        <label htmlFor="priority">Priority</label>
+                        <input
+                            id="priority"
+                            name="priority"
+                            placeholder="Priority"
+                            onChange={handleChange}
+                            value={todo.priority}
+                        />
+                        <label htmlFor="date">Date</label>
                         <input
                             name="date"
                             placeholder="Date"
@@ -47,9 +91,17 @@ function TodoList() {
                             value={todo.date}
                         />
                         <button onClick={addTodo}>Add</button>
+                        <button onClick={handleDelete}>Delete</button>
 
                     </fieldset>
-                    <TodoTable todos={todos} handleDelete={handleDelete} />
+                    <div style={{ width: 700, height: 500 }}>
+                        <AgGridReact
+                            ref={gridRef}
+                            rowData={todos}
+                            columnDefs={columnDefs}
+                            rowSelection="single"
+                        />
+                    </div>
 
                 </main>
             </div>

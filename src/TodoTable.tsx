@@ -11,6 +11,7 @@ function TodoTable(props: TodoTableProps) {
                     <thead>
                         <tr>
                             <th>Description</th>
+                            <th>Priority</th>
                             <th>Date</th>
                             <td>Action</td>
                         </tr>
@@ -19,6 +20,7 @@ function TodoTable(props: TodoTableProps) {
                         {props.todos.map((todo, index) => (
                             <tr key={index}>
                                 <td>{todo.description}</td>
+                                <td>{todo.priority}</td>
                                 <td>{todo.date}</td>
                                 <td>
                                     <button onClick={() => props.handleDelete(index)}>
