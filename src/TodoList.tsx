@@ -2,6 +2,12 @@ import { useRef, useState } from "react";
 import { AgGridReact } from "ag-grid-react"
 import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community';
 import { ColDef } from "ag-grid-community"
+import Button from "@mui/material/Button"
+import TextField from "@mui/material/TextField"
+import Stack from "@mui/material/Stack"
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import TodoTable from "./TodoTable";
 import { Todo } from "./types";
 import './App.css'
@@ -13,17 +19,24 @@ function TodoList() {
     // Declare states
     const [todo, setTodo] = useState<Todo>({ description: '', priority: '', date: '' });
     const [todos, setTodos] = useState<Todo[]>([]);
+    const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
 
     const addTodo = () => {
-        if (todo.description && todo.date) {
-            setTodos([...todos, todo]);
-            setTodo({ description: '', priority: '', date: '' });
+        if (todo.description && selectedDate) {
+            const newTodo = { ...todo, date: selectedDate.format("YYYY-MM-DD") };
+            setTodos((prevTodos) => [...prevTodos, newTodo]);
+            setTodo({ description: "", priority: "", date: "" });
+            setSelectedDate(null);
         }
     };
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
         setTodo(prevTodo => ({ ...prevTodo, [name]: value }));
+    };
+
+    const handleDateChange = (date: dayjs.Dayjs | null) => {
+        setSelectedDate(date);
     };
 
     const handleDelete = () => {
@@ -62,38 +75,33 @@ function TodoList() {
     return (
         <>
             <div className="App">
-                <header><h1>Simple Todolist</h1></header>
 
                 <main>
-                    <fieldset>
-                        <legend>Add todo:</legend>
-                        <label htmlFor="description">Description</label>
-                        <input
+
+                    <Stack direction="row" spacing={2}>
+
+                        <TextField
                             name="description"
-                            placeholder="Description"
+                            label="Description"
                             onChange={handleChange}
                             value={todo.description}
                         />
-                        <label htmlFor="priority">Priority</label>
-                        <input
+                        <TextField
                             id="priority"
                             name="priority"
-                            placeholder="Priority"
+                            label="Priority"
                             onChange={handleChange}
                             value={todo.priority}
                         />
-                        <label htmlFor="date">Date</label>
-                        <input
-                            name="date"
-                            placeholder="Date"
-                            type="date"
-                            onChange={handleChange}
-                            value={todo.date}
-                        />
-                        <button onClick={addTodo}>Add</button>
-                        <button onClick={handleDelete}>Delete</button>
 
-                    </fieldset>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker label="Date" value={selectedDate} onChange={handleDateChange} />
+                        </LocalizationProvider>
+
+                        <Button onClick={addTodo} variant="contained">Add</Button>
+                        <Button onClick={handleDelete} variant="outlined" color="error">Delete</Button>
+
+                    </Stack>
                     <div style={{ width: 700, height: 500 }}>
                         <AgGridReact
                             ref={gridRef}
@@ -102,7 +110,6 @@ function TodoList() {
                             rowSelection="single"
                         />
                     </div>
-
                 </main>
             </div>
         </>
